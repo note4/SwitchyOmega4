@@ -1,32 +1,46 @@
+if not globalThis.window
+  globalThis.window = globalThis
+  globalThis.global = globalThis
 window.UglifyJS_NoUnsafeEval = true
-localStorage['log'] = ''
-localStorage['logLastError'] = ''
+globalThis.zeroDetectModeCB = null
+globalThis.startupCheck = undefined
 
-window.OmegaContextMenuQuickSwitchHandler = -> null
+initContextMenu = ->
+  return unless chrome.contextMenus
+  chrome.contextMenus.removeAll()
+  chrome.contextMenus.create({
+    id: 'enableQuickSwitch'
+    title: chrome.i18n.getMessage('contextMenu_enableQuickSwitch')
+    type: 'checkbox'
+    checked: false
+    contexts: ["action"]
+  })
 
-if chrome.contextMenus?
-  # We don't need this API. However its presence indicates that Chrome >= 35
-  # which provides info.checked we need in contextMenu callback.
-  # https://developer.chrome.com/extensions/contextMenus
-  if chrome.i18n.getUILanguage?
-    # We must create the menu item here before others to make it first in menu.
+  chrome.contextMenus.create({
+    id: 'reportIssue'
+    title: chrome.i18n.getMessage('popup_reportIssues')
+    contexts: ["action"]
+  })
+  chrome.contextMenus.create({
+    id: 'reload'
+    title: chrome.i18n.getMessage('popup_Reload')
+    contexts: ["action"]
+  })
+  if !!globalThis.localStorage
     chrome.contextMenus.create({
-      id: 'enableQuickSwitch'
-      title: chrome.i18n.getMessage('contextMenu_enableQuickSwitch')
-      type: 'checkbox'
-      checked: false
-      contexts: ["browser_action"]
-      onclick: (info) -> window.OmegaContextMenuQuickSwitchHandler(info)
+      id: 'options'
+      title: chrome.i18n.getMessage('popup_showOptions')
+      contexts: ["action"]
     })
 
-  chrome.contextMenus.create({
-    title: chrome.i18n.getMessage('popup_reportIssues')
-    contexts: ["browser_action"]
-    onclick: OmegaDebug.reportIssue
-  })
+initContextMenu()
 
-  chrome.contextMenus.create({
-    title: chrome.i18n.getMessage('popup_errorLog')
-    contexts: ["browser_action"]
-    onclick: OmegaDebug.downloadLog
-  })
+chrome.contextMenus?.onClicked.addListener((info, tab) ->
+  switch info.menuItemId
+    when 'options'
+      browser.runtime.openOptionsPage()
+    when 'reload'
+      chrome.runtime.reload()
+    when 'reportIssue'
+      OmegaDebug.reportIssue()
+)

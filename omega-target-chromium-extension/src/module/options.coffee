@@ -7,11 +7,101 @@ ChromePort = require('./chrome_port')
 fetchUrl = require('./fetch_url')
 Url = require('url')
 
+TEMPPROFILEKEY = 'tempProfileState'
+
 class ChromeOptions extends OmegaTarget.Options
   _inspect: null
 
   fetchUrl: fetchUrl
 
+  constructor: (args...) ->
+    super(args...)
+    chrome.alarms.onAlarm.addListener (alarm) =>
+      switch alarm.name
+        when 'omega.updateProfile'
+          @ready.then( =>
+            @updateProfile()
+          )
+    chrome.contextMenus?.onClicked.addListener((info, tab) =>
+      @ready.then( =>
+        switch info.menuItemId
+          when 'enableQuickSwitch'
+            changes = {}
+            changes['-enableQuickSwitch'] = info.checked
+            setOptions = @_setOptions(changes)
+            if info.checked and not @_quickSwitchCanEnable
+              setOptions.then ->
+                chrome.tabs.create(
+                  url: chrome.runtime.getURL('options.html#/ui')
+                )
+      )
+    )
+
+    chrome.action.onClicked.addListener (tab) =>
+      if browser?.proxy?.onRequest?
+        browser.permissions.request({origins: ["<all_urls>"]})
+      @ready.then( =>
+        @clearBadge()
+        if not @_options['-enableQuickSwitch']
+          # If we reach here, then the browser does not support popup.
+          # Let's open the popup page in a tab.
+          chrome.tabs.create(url: 'popup/index.html')
+          return
+        profiles = @_options['-quickSwitchProfiles']
+        index = profiles.indexOf(@_currentProfileName)
+        index = (index + 1) % profiles.length
+        @applyProfile(profiles[index]).then =>
+          if @_options['-refreshOnProfileChange']
+            url = tab.pendingUrl or tab.url
+            return if not url
+            return if url.substr(0, 6) == 'chrome'
+            return if url.substr(0, 6) == 'about:'
+            return if url.substr(0, 4) == 'moz-'
+            if tab.pendingUrl
+              chrome.tabs.update(tab.id, {url: url})
+            else
+              chrome.tabs.reload(tab.id)
+      )
+
+  init: (startupCheck) ->
+    super(startupCheck)
+    @ready.then =>
+      chrome.storage.session
+      .get(TEMPPROFILEKEY).then((tempProfileState = {}) =>
+        tempProfileState = if globalThis.hasStartupCheck
+        then tempProfileState[TEMPPROFILEKEY] else null
+        # tempProfileState =
+        # { _tempProfile,
+        # _tempProfileActive}
+        if tempProfileState
+          @_tempProfile = tempProfileState._tempProfile
+          @_tempProfile.rules.forEach((_rule) =>
+            key = OmegaPac.Profiles.nameAsKey(_rule.profileName)
+            @_tempProfileRulesByProfile[key] =
+              @_tempProfileRulesByProfile[key] or []
+            @_tempProfileRulesByProfile[key].push(_rule)
+            condition = _rule.condition
+            domain = condition.pattern.substring(2)
+            @_tempProfileRules[domain] = _rule
+          )
+          #@_tempProfileRules = tempProfileState._tempProfileRules
+          #@_tempProfileRulesByProfile =
+          #  tempProfileState._tempProfileRulesByProfile
+          @_tempProfileActive = tempProfileState._tempProfileActive
+          OmegaPac.Profiles.updateRevision(@_tempProfile)
+          console.log('apply temp state profile', @_currentProfileName)
+          @applyProfile(@_currentProfileName)
+        )
+    @ready
+
+  addTempRule: (domain, profileName) ->
+    super(domain, profileName).then =>
+      _zeroState = {}
+      _zeroState[TEMPPROFILEKEY] = {
+        _tempProfile: @_tempProfile
+        _tempProfileActive: @_tempProfileActive
+      }
+      chrome.storage.session.set(_zeroState)
   updateProfile: (args...) ->
     super(args...).then (results) ->
       error = false
@@ -51,11 +141,11 @@ class ChromeOptions extends OmegaTarget.Options
         else
           text: '?'
           color: '#49afcd'
-    chrome.browserAction.setBadgeText(text: options.text)
-    chrome.browserAction.setBadgeBackgroundColor(color: options.color)
+    chrome.action.setBadgeText(text: options.text)
+    chrome.action.setBadgeBackgroundColor(color: options.color)
     if options.title
       @_badgeTitle = options.title
-      chrome.browserAction.setTitle(title: options.title)
+      chrome.action.setTitle(title: options.title)
     else
       @_badgeTitle = null
   clearBadge: ->
@@ -65,50 +155,16 @@ class ChromeOptions extends OmegaTarget.Options
     if @_proxyNotControllable
       @setBadge()
     else
-      chrome.browserAction.setBadgeText?(text: '')
+      chrome.action.setBadgeText?(text: '')
     return
 
-  _quickSwitchInit: false
-  _quickSwitchHandlerReady: false
   _quickSwitchCanEnable: false
   setQuickSwitch: (quickSwitch, canEnable) ->
     @_quickSwitchCanEnable = canEnable
-    if not @_quickSwitchHandlerReady
-      @_quickSwitchHandlerReady = true
-      window.OmegaContextMenuQuickSwitchHandler = (info) =>
-        changes = {}
-        changes['-enableQuickSwitch'] = info.checked
-        setOptions = @_setOptions(changes)
-        if info.checked and not @_quickSwitchCanEnable
-          setOptions.then ->
-            chrome.tabs.create(
-              url: chrome.extension.getURL('options.html#/ui')
-            )
-
-    if quickSwitch or not chrome.browserAction.setPopup?
-      chrome.browserAction.setPopup?({popup: ''})
-      if not @_quickSwitchInit
-        @_quickSwitchInit = true
-        chrome.browserAction.onClicked.addListener (tab) =>
-          @clearBadge()
-          if not @_options['-enableQuickSwitch']
-            # If we reach here, then the browser does not support popup.
-            # Let's open the popup page in a tab.
-            chrome.tabs.create(url: 'popup/index.html')
-            return
-          profiles = @_options['-quickSwitchProfiles']
-          index = profiles.indexOf(@_currentProfileName)
-          index = (index + 1) % profiles.length
-          @applyProfile(profiles[index]).then =>
-            if @_options['-refreshOnProfileChange']
-              url = tab.url
-              return if not url
-              return if url.substr(0, 6) == 'chrome'
-              return if url.substr(0, 6) == 'about:'
-              return if url.substr(0, 4) == 'moz-'
-              chrome.tabs.reload(tab.id)
+    if quickSwitch
+      chrome.action.setPopup({popup: ''})
     else
-      chrome.browserAction.setPopup({popup: 'popup/index.html'})
+      chrome.action.setPopup({popup: globalThis.POPUPHTMLURL})
 
     chrome.contextMenus?.update('enableQuickSwitch', {checked: !!quickSwitch})
     Promise.resolve()
@@ -135,14 +191,22 @@ class ChromeOptions extends OmegaTarget.Options
         if info.errorCount > 0
           info.badgeSet = true
           badge = {text: info.errorCount.toString(), color: '#f0ad4e'}
-          chrome.browserAction.setBadgeText(text: badge.text, tabId: tabId)
-          chrome.browserAction.setBadgeBackgroundColor(
+          chrome.action.setBadgeText(text: badge.text, tabId: tabId)
+          .catch((e) ->
+            console.log('error:',e)
+          )
+          chrome.action.setBadgeBackgroundColor(
             color: badge.color
             tabId: tabId
+          ).catch((e) ->
+            console.log('error:',e)
           )
         else if info.badgeSet
           info.badgeSet = false
-          chrome.browserAction.setBadgeText(text: '', tabId: tabId)
+          chrome.action.setBadgeText(text: '', tabId: tabId)
+          .catch((e) ->
+            console.log('error:',e)
+          )
         @_tabRequestInfoPorts[tabId]?.postMessage({
           errorCount: info.errorCount
           summary: info.summary
@@ -165,18 +229,11 @@ class ChromeOptions extends OmegaTarget.Options
         port.onDisconnect.addListener =>
           delete @_tabRequestInfoPorts[tabId] if tabId?
 
-  _alarms: null
-  schedule: (name, periodInMinutes, callback) ->
+  schedule: (name, periodInMinutes) ->
     name = 'omega.' + name
-    if not _alarms?
-      @_alarms = {}
-      chrome.alarms.onAlarm.addListener (alarm) =>
-        @_alarms[alarm.name]?()
     if periodInMinutes < 0
-      delete @_alarms[name]
       chrome.alarms.clear(name)
     else
-      @_alarms[name] = callback
       chrome.alarms.create(name, {
         periodInMinutes: periodInMinutes
       })
@@ -208,47 +265,21 @@ class ChromeOptions extends OmegaTarget.Options
       chrome.i18n.getMessage('browserAction_profileDetails_' + type) || null
 
   upgrade: (options, changes) ->
-    super(options).catch (err) =>
-      return Promise.reject err if options?['schemaVersion']
-      getOldOptions = if @switchySharp
-        @switchySharp.getOptions().timeout(1000)
-      else
-        Promise.reject()
-
-      getOldOptions = getOldOptions.catch ->
-        if options?['config']
-          Promise.resolve options
-        else if localStorage['config']
-          Promise.resolve localStorage
-        else
-          Promise.reject new OmegaTarget.Options.NoOptionsError()
-
-      getOldOptions.then (oldOptions) =>
-        i18n = {
-          upgrade_profile_auto: chrome.i18n.getMessage('upgrade_profile_auto')
-        }
-        try
-          # Upgrade from SwitchySharp.
-          upgraded = require('./upgrade')(oldOptions, i18n)
-        catch ex
-          @log.error(ex)
-          return Promise.reject ex
-        if localStorage['config']
-          Object.getPrototypeOf(localStorage).clear.call(localStorage)
-        @_state.set({'firstRun': 'upgrade'})
-        return this && super(upgraded, upgraded)
+    super(options).catch (err) ->
+      return Promise.reject err
 
   onFirstRun: (reason) ->
-    chrome.tabs.create url: chrome.extension.getURL('options.html')
+    console.log('first run ....')
+    chrome.tabs.create url: chrome.runtime.getURL('options.html')
 
   getPageInfo: ({tabId, url}) ->
     errorCount = @_requestMonitor?.tabInfo[tabId]?.errorCount
     result = if errorCount then {errorCount: errorCount} else null
     getBadge = new Promise (resolve, reject) ->
-      if not chrome.browserAction.getBadgeText?
+      if not chrome.action.getBadgeText?
         resolve('')
         return
-      chrome.browserAction.getBadgeText {tabId: tabId}, (result) ->
+      chrome.action.getBadgeText {tabId: tabId}, (result) ->
         resolve(result)
 
     getInspectUrl = @_state.get({inspectUrl: ''})
@@ -268,10 +299,12 @@ class ChromeOptions extends OmegaTarget.Options
       return result if url.substr(0, 6) == 'about:'
       return result if url.substr(0, 4) == 'moz-'
       domain = OmegaPac.getBaseDomain(Url.parse(url).hostname)
+      subdomain = OmegaPac.getSubdomain(url)
 
       return {
         url: url
         domain: domain
+        subdomain: subdomain
         tempRuleProfileName: @queryTempRule(domain)
         errorCount: errorCount
       }

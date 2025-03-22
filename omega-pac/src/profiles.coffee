@@ -11,6 +11,15 @@ class AST_Raw extends U2.AST_SymbolRef
     U2.AST_SymbolRef.call(this, name: raw)
     @aborts = -> false
 
+decorateCustomBuiltinProfiles = (profile, options = {}) ->
+  return unless profile
+  key = exports.nameAsKey(profile)
+  if exports.builtinProfiles[key]
+    customBuiltinProfiles = Object.assign(
+      {}, exports.builtinProfiles, options['-builtinProfiles']
+    )
+    profile.color = customBuiltinProfiles[key].color
+
 module.exports = exports =
   builtinProfiles:
     '+direct':
@@ -76,14 +85,18 @@ module.exports = exports =
       profileName = profileName.name
     '+' + profileName
   byName: (profileName, options) ->
+    profile = profileName
     if typeof profileName == 'string'
       key = exports.nameAsKey(profileName)
-      profileName = exports.builtinProfiles[key] ? options[key]
-    profileName
+      profile = exports.builtinProfiles[key] ? options[key]
+      decorateCustomBuiltinProfiles(profile, options)
+    profile
   byKey: (key, options) ->
+    profile = key
     if typeof key == 'string'
-      key = exports.builtinProfiles[key] ? options[key]
-    key
+      profile = exports.builtinProfiles[key] ? options[key]
+      decorateCustomBuiltinProfiles(profile, options)
+    profile
 
   each: (options, callback) ->
     charCodePlus = '+'.charCodeAt(0)
@@ -91,6 +104,7 @@ module.exports = exports =
       callback(key, profile)
     for key, profile of exports.builtinProfiles
       if key.charCodeAt(0) == charCodePlus
+        decorateCustomBuiltinProfiles(profile, options)
         callback(key, profile)
 
   profileResult: (profileName) ->
@@ -458,7 +472,13 @@ module.exports = exports =
       match: (profile, request) ->
         result = exports.match(profile, request, 'SwitchProfile')
       compile: (profile) ->
-        exports.compile(profile, 'SwitchProfile')
+        if profile.isTempPacProfile
+          exports.compile(profile, 'SwitchProfile')
+        else
+          if profile.pacScript
+            exports.compile(profile, 'PacProfile')
+          else
+            exports.compile(profile, 'SwitchProfile')
       updateUrl: (profile) -> profile.sourceUrl
       updateContentTypeHints: -> [
         '!text/html'
@@ -483,6 +503,8 @@ module.exports = exports =
         if formatHandler.preprocess?
           data = formatHandler.preprocess(data)
         return false if profile.ruleList == data
+        # regenerator pacScript
+        profile.pacScript = ''
         profile.ruleList = data
         return true
     'SwitchyRuleListProfile': 'RuleListProfile'

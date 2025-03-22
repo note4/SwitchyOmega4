@@ -393,6 +393,41 @@ main {
   .table-responsive .dropdown-menu {
     position: static !important;
   }
+  .btn {
+    padding: 1px 5px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px;
+  }
+  select.form-control {
+    line-height: 1;
+    padding: 0;
+    height: 25px;
+  }
+  main {
+    border-top: 3px dotted;
+    margin-top: 20px;
+  }
+  main .page-header{
+    padding: 20px 0;
+  }
+  select.form-control.inline-form-control {
+    display: block;
+    height: 25px;
+    margin: 20px 0;
+    width: 100% !important;
+    min-width: 100%;
+  }
+  textarea.width-limit{
+    max-width: 100%;
+  }
+  .settings-group > * {
+    margin-left: 0;
+  }
+  .profile-actions{
+    float: initial;
+    margin: 10px 0;
+  }
 }
 
 .fixed-servers,
@@ -508,4 +543,20 @@ main {
 
 .modal-body .well:last-child {
   margin-bottom: 0;
+}
+
+.use-built-in-sync-enhance-tip {
+  display: inline-block;
+}
+.settings-group .sync-form .clean-btn{
+  position: absolute;
+}
+.sync-form input.form-control[readonly]{
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+.sync-form input.form-control:focus{
+  -webkit-text-security: initial;
+  text-security: initial;
 }

@@ -1,5 +1,11 @@
-SwitchyOmega
+ZeroOmega, forked from SwitchyOmega compatible with manifest v3
 ============
+
+[Chrome Web Store](https://chromewebstore.google.com/detail/pfnededegaaopdmhkdmcofjmoldfiped)
+
+[Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/zeroomegaproxy-switchy-/dmaldhchmoafliphkijbfhaomcgglmgd)
+
+[Firefox Addon](https://addons.mozilla.org/en-US/firefox/addon/zeroomega/)
 
 Manage and switch between multiple proxies quickly & easily.
 
@@ -9,33 +15,20 @@ Chromium Extension
 ------------------
 The project is available as a Chromium Extension.
 
-You can try it on [Chrome Web Store](https://chrome.google.com/webstore/detail/padekgcemlokbadohgkifijomclgjgif),
-or grab a packaged extension file (CRX) for offline installation on the [Releases page](https://github.com/FelisCatus/SwitchyOmega/releases).
+You can try it on [Chrome Web Store](https://chromewebstore.google.com/detail/pfnededegaaopdmhkdmcofjmoldfiped),
+or grab a packaged extension file (CRX) for offline installation on the [Releases page](https://github.com/zero-peak/ZeroOmega/releases).
 
-Please [report issues on the issue tracker.](https://github.com/FelisCatus/SwitchyOmega/issues)
+Please [report issues on the issue tracker](https://github.com/zero-peak/ZeroOmega/issues).
 
-Firefox Addon (Experimental)
+Firefox Addon
 ----------------------------
 
-There is also an experimental WebExtension port, which allows installing in
-**Firefox Nightly Version >= 56**.
+There is also a WebExtension port, which allows installing in Firefox. Compatibility with Firefox has increased significantly recently.
 
-**Since the WebExtensions API is still under heavy development on Mozilla's side,
-we strongly recommended using the Nightly channel (>= 56.0) and update frequently.**
+You can try it on [Mozilla Add-ons](https://addons.mozilla.org/en-US/firefox/addon/zeroomega/),
+or grab a packaged extension file (XPI) for offline installation on the [Releases page](https://github.com/zero-peak/ZeroOmega/releases).
 
-The Developer Edition and Beta channels will not receive fixes as often and
-therefore unsupported by SwitchyOmega. Some users report that it works with the
-Firefox Developer Edition (>= 55) as well, but we strongly advise against doing
-so. It won't work at all in Firefox 54 Stable.
-
-You can try it on [Mozilla Add-ons](https://addons.mozilla.org/en-US/firefox/addon/switchyomega/),
-or grab a packaged extension file (XPI) for offline installation on the [Releases page](https://github.com/FelisCatus/SwitchyOmega/releases).
-
-Please make sure that you are using the latest Nightly build before you
-[report issues](https://github.com/FelisCatus/SwitchyOmega/issues).
-Build number AND build date should be mentioned somewhere in the issue.
-
-NOTE: PAC Profiles DO NOT work on Firefox due to AMO review policies. We will see what we can do.
+Please [report issues on the issue tracker](https://github.com/zero-peak/ZeroOmega/issues), browser-specific bugs are possible.
 
 Development status
 ------------------
@@ -94,7 +87,7 @@ below.
 
 ## Building the project
 
-SwitchyOmega has migrated to use npm and grunt for building. Please note that
+ZeroOmega has migrated to use npm and grunt for building. Please note that
 npm 2.x is required for this project.
 
 To build the project:
@@ -111,7 +104,7 @@ To build the project:
     grunt
     # After building, a folder will be generated:
     cd .. # Return to project root.
-    ls omega-chromium-extension/build/
+    ls omega-target-chromium-extension/build/
     # The folder above can be loaded as an unpacked extension in Chromium now.
 
 To enable `grunt watch`, run `grunt watch` once in the `omega-build` directory.
@@ -121,31 +114,32 @@ License
 -------
 ![GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)
 
-SwitchyOmega is licensed under [GNU General Public License](https://www.gnu.org/licenses/gpl.html) Version 3 or later.
+ZeroOmega is licensed under [GNU General Public License](https://www.gnu.org/licenses/gpl.html) Version 3 or later.
 
-SwitchyOmega is free software: you can redistribute it and/or modify
+ZeroOmega is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-SwitchyOmega is distributed in the hope that it will be useful,
+ZeroOmega is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with SwitchyOmega.  If not, see <http://www.gnu.org/licenses/>.
+along with ZeroOmega.  If not, see <http://www.gnu.org/licenses/>.
 
 Notice
 ------
 
-SwitchyOmega currently does not have a dedicated project homepage. `switchyomega.com` and similar webites are NOT affiliated with the SwitchyOmega project in any way, nor are they maintained by SwitchyOmega project members. Please refer to this Github repository and wiki for official information.
 
-SwitchyOmega is not cooperating with any proxy providers, VPN providers or ISPs at the moment. No advertisement is displayed in SwitchyOmega project or software. Proxy providers are welcome to recommend SwitchyOmega as part of the solution in tutorials, but it must be made clear that SwitchyOmega is an independent project, is not affiliated with the provider and therefore cannot provide any support on network connections or proxy technology.
+ZeroOmega currently does not have a dedicated project homepage. Please refer to this Github repository and wiki for official information.
+
+ZeroOmega is not cooperating with any proxy providers, VPN providers or ISPs at the moment. No advertisement is displayed in ZeroOmega project or software. Proxy providers are welcome to recommend ZeroOmega as part of the solution in tutorials, but it must be made clear that ZeroOmega is an independent project, is not affiliated with the provider and therefore cannot provide any support on network connections or proxy technology.
 
 重要声明
 --------
 
-SwitchyOmega 目前没有专门的项目主页。 `switchyomega.com` 等网站与 SwitchyOmega 项目并无任何关联，也并非由 SwitchyOmega 项目成员维护。一切信息请以 Github 上的项目和 wiki 为准。
+ZeroOmega 目前没有专门的项目主页。一切信息请以 Github 上的项目和 wiki 为准。
 
-SwitchyOmega 目前未与任何代理提供商、VPN提供商或 ISP 达成任何合作协议，项目或软件中不包含任何此类广告。欢迎代理提供商在教程或说明中推荐 SwitchyOmega ，但请明确说明此软件是独立项目，与代理提供商无关，且不提供任何关于网络连接或代理技术的支持。
+ZeroOmega 目前未与任何代理提供商、VPN提供商或 ISP 达成任何合作协议，项目或软件中不包含任何此类广告。欢迎代理提供商在教程或说明中推荐 ZeroOmega ，但请明确说明此软件是独立项目，与代理提供商无关，且不提供任何关于网络连接或代理技术的支持。

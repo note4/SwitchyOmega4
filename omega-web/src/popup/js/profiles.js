@@ -1,7 +1,4 @@
 (function() {
-  $script.ready('om-state', updateMenuByState);
-  $script.ready('om-page-info', updateMenuByPageInfo);
-  $script.ready(['om-state', 'om-page-info'], updateMenuByStateAndPageInfo);
 
   var profileTemplate = document.getElementById('js-profile-tpl')
     .cloneNode(true);
@@ -24,6 +21,10 @@
     'SwitchProfile': 2000,
     'RuleListProfile': 3000,
   };
+
+  $script.ready('om-state', updateMenuByState);
+  $script.ready('om-page-info', updateMenuByPageInfo);
+  $script.ready(['om-state', 'om-page-info'], updateMenuByStateAndPageInfo);
 
   return;
 
@@ -119,9 +120,18 @@
       isValidResultProfile['+' + name] = true;
     });
 
+  function createGlobeIcon(targetEl, color){
+    var el = document.createElement('span')
+    el.className = 'glyphicon glyphicon-globe'
+    el.style.color = color
+    targetEl.appendChild(el)
+  }
+
   function addProfilesItems(state) {
     var systemProfileDisp = document.getElementById('js-system');
     var directProfileDisp = document.getElementById('js-direct');
+    var systemProfile = state.availableProfiles['+system']
+    var directProfile = state.availableProfiles['+direct']
     var currentProfileClass = 'om-active';
     if (state.isSystemProfile) {
       systemProfileDisp.parentElement.classList.add('om-active');
@@ -130,11 +140,12 @@
     if (state.currentProfileName === 'direct') {
       directProfileDisp.parentElement.classList.add(currentProfileClass);
     }
-
+    createGlobeIcon(systemProfileDisp, systemProfile.color)
     systemProfileDisp.setAttribute('title',
-      state.availableProfiles['+system'].desc);
+      systemProfile.desc);
+    createGlobeIcon(directProfileDisp, directProfile.color)
     directProfileDisp.setAttribute('title',
-      state.availableProfiles['+direct'].desc);
+      directProfile.desc);
 
     var profilesEnd = document.getElementById('js-profiles-end');
     var profilesContainer = profilesEnd.parentElement;
